@@ -6,13 +6,13 @@ import { StatusBar, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
 const SpashScreen = () => {
-  const router = useRouter();
+  // const router = useRouter();
 
-  useEffect(() => {
-    setTimeout(() => {
-      router.replace("/(auth)/welcome");
-    }, 2000);
-  }, [router]);
+  // useEffect(() => {
+  //   setTimeout(() => {
+  //     router.replace("/(auth)/welcome");
+  //   }, 2000);
+  // }, [router]);
 
   return (
     <View style={styles.container}>
