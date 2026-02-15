@@ -54,9 +54,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
   try {
     // Check if already exists
     let user = await User.findOne({ email });
-    console.log("ada");
     if (!user) {
-      console.log("tidak");
       res.status(400).json({
         success: false,
         msg: "Invalid credentials",
@@ -66,9 +64,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
 
     // compare password
     const isMatch = await bcrypt.compare(password, user.password);
-    console.log("benar");
     if (!isMatch) {
-      console.log("salah");
       res.status(400).json({
         success: false,
         msg: "Invalid credentials",

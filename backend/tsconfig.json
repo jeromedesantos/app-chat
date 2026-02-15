@@ -25,5 +25,13 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false
+  },
+  "ts-node": {
+    "esm": true,
+    "experimentalEsm": true,
+    "resolveJsonModule": true,
+    "moduleTypes": {
+      "**/*": "esm"
+    }
   }
 }

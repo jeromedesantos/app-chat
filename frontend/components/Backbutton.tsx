@@ -2,7 +2,7 @@ import { colors } from "@/constants/theme";
 import { BackButtonProps } from "@/types";
 import { verticalScale } from "@/utils/styling";
 import { useRouter } from "expo-router";
-import { CaretLeft } from "phosphor-react-native";
+import * as Icons from "phosphor-react-native";
 import React from "react";
 import { StyleSheet, TouchableOpacity } from "react-native";
 
@@ -18,7 +18,11 @@ const Backbutton = ({
       onPress={() => router.back()}
       style={[styles.button, style]}
     >
-      <CaretLeft size={verticalScale(iconSize)} color={color} weight="bold" />
+      <Icons.CaretLeft
+        size={verticalScale(iconSize)}
+        color={color}
+        weight="bold"
+      />
     </TouchableOpacity>
   );
 };

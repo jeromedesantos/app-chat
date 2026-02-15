@@ -1,4 +1,5 @@
 import { login, register } from "@/services/authService";
+import { connectSocket, disconnectSocket } from "@/socket/socket";
 import { AuthContextProps, DecodedTokenProps, UserProps } from "@/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
@@ -44,6 +45,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // user is logged  in
         setToken(storedToken);
         setUser(decoded.user);
+        // reconnect socket when resuming from app restart
+        try {
+          await connectSocket();
+        } catch (socketError) {
+          console.log("Failed to connect socket on app resume: ", socketError);
+        }
         gotoHomePage();
       } catch (error) {
         gotoWelcomePage();
@@ -71,7 +78,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const updateToken = async (token: string) => {
     if (token) {
       setToken(token);
-      await AsyncStorage.setItem("authToken", token);
+      await AsyncStorage.setItem("token", token);
 
       // decode token (user)
       const decoded: any = jwtDecode<DecodedTokenProps>(token);
@@ -83,6 +90,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signIn = async (email: string, password: string) => {
     const response = await login(email, password);
     await updateToken(response.token);
+    await connectSocket();
     router.replace("/(main)/home");
   };
 
@@ -94,13 +102,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   ) => {
     const response = await register(email, password, name, avatar);
     await updateToken(response.token);
+    await connectSocket();
     router.replace("/(main)/home");
   };
 
   const signOut = async () => {
     setToken(null);
     setUser(null);
-    await AsyncStorage.removeItem("authToken");
+    await AsyncStorage.removeItem("token");
+    disconnectSocket();
     router.replace("/(auth)/welcome");
   };
 

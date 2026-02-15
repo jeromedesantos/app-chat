@@ -7,7 +7,7 @@ import { colors, radius, spacingX, spacingY } from "@/constants/theme";
 import { useAuth } from "@/contexts/authContext";
 import { verticalScale } from "@/utils/styling";
 import { useRouter } from "expo-router";
-import { At, Lock, User } from "phosphor-react-native";
+import * as Icons from "phosphor-react-native";
 import { useRef, useState } from "react";
 import {
   Alert,
@@ -75,7 +75,7 @@ const Register = () => {
                   nameRef.current = value;
                 }}
                 icon={
-                  <User
+                  <Icons.User
                     size={verticalScale(20)}
                     color={colors.neutral600}
                     weight="bold"
@@ -88,7 +88,7 @@ const Register = () => {
                   emailRef.current = value;
                 }}
                 icon={
-                  <At
+                  <Icons.At
                     size={verticalScale(20)}
                     color={colors.neutral600}
                     weight="bold"
@@ -101,7 +101,7 @@ const Register = () => {
                   passwordRef.current = value;
                 }}
                 icon={
-                  <Lock
+                  <Icons.Lock
                     size={verticalScale(20)}
                     color={colors.neutral600}
                     weight="bold"
