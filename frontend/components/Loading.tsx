@@ -1,5 +1,4 @@
 import { colors } from "@/constants/theme";
-import React from "react";
 import { ActivityIndicator, ActivityIndicatorProps, View } from "react-native";
 
 const Loading = ({

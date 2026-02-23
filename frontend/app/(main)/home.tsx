@@ -3,33 +3,143 @@ import Typo from "@/components/Typo";
 import * as Icons from "phosphor-react-native";
 import { colors, radius, spacingX, spacingY } from "@/constants/theme";
 import { useAuth } from "@/contexts/authContext";
-import { testSocket } from "@/socket/socketEvents";
+import {
+  getConversations,
+  newConversation,
+  testSocket,
+} from "@/socket/socketEvents";
 import { verticalScale } from "@/utils/styling";
-import { useEffect } from "react";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { useEffect, useState } from "react";
+import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useRouter } from "expo-router";
+import ConversationItem from "@/components/ConversationItem";
+import Loading from "@/components/Loading";
+import Button from "@/components/Button";
+import { ConversationProps, ResponseProps } from "@/types";
 
 const Home = () => {
   const { user: currentUser, signOut } = useAuth();
   const router = useRouter();
-  // console.log("User data:", user);
+
+  const [selectedTab, setSelectedTab] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [conversations, setConversations] = useState<ConversationProps[]>([]);
 
   useEffect(() => {
-    testSocket(testSocketCallbackHandler);
-    testSocket(null);
+    getConversations(processConversations);
+    newConversation(newConversationHandler);
+
+    getConversations(null);
 
     return () => {
-      testSocket(testSocketCallbackHandler, true);
+      getConversations(processConversations, true);
+      newConversation(newConversationHandler, true);
     };
   }, []);
 
-  function testSocketCallbackHandler(data: any) {
-    console.log("got response from testSocket event: ", data);
-  }
+  const processConversations = (res: ResponseProps) => {
+    // console.log("res: ", res);
+    if (res.success) {
+      setConversations(res.data);
+    }
+  };
+
+  const newConversationHandler = (res: ResponseProps) => {
+    if (res.success && res.data.isNew) {
+      setConversations((prev) => [...prev, res.data]);
+    }
+  };
+  // console.log("User data:", user);
+
+  // useEffect(() => {
+  //   testSocket(testSocketCallbackHandler);
+  //   testSocket(null);
+
+  //   return () => {
+  //     testSocket(testSocketCallbackHandler, true);
+  //   };
+  // }, []);
+
+  // function testSocketCallbackHandler(data: any) {
+  //   console.log("got response from testSocket event: ", data);
+  // }
 
   const handleLogout = async () => {
     await signOut();
   };
+
+  // const conversations = [
+  //   {
+  //     name: "Volksen",
+  //     type: "direct",
+  //     lastMessage: {
+  //       senderName: "Volksen",
+  //       content: "Guten Morgen",
+  //       createdAt: "2025-06-23T09:30:00Z",
+  //     },
+  //   },
+  //   {
+  //     name: "Jerome",
+  //     type: "direct",
+  //     lastMessage: {
+  //       senderName: "Jerome",
+  //       content: "Hallo! Wie geht es dir?",
+  //       createdAt: "2025-06-23T07:50:00Z",
+  //     },
+  //   },
+  //   {
+  //     name: "Volksen",
+  //     type: "direct",
+  //     lastMessage: {
+  //       senderName: "Volksen",
+  //       content: "Mir geht's gut",
+  //       createdAt: "2025-06-23T07:50:00Z",
+  //     },
+  //   },
+  //   {
+  //     name: "React Native Group",
+  //     type: "group",
+  //     lastMessage: {
+  //       senderName: "Admin",
+  //       content: "New update available!",
+  //       createdAt: "2025-06-23T06:15:00Z",
+  //     },
+  //   },
+  //   {
+  //     name: "Design Team",
+  //     type: "group",
+  //     lastMessage: {
+  //       senderName: "Sarah",
+  //       content: "Check out the new mockups",
+  //       createdAt: "2025-06-23T05:45:00Z",
+  //     },
+  //   },
+  //   {
+  //     name: "Project Alpha",
+  //     type: "group",
+  //     lastMessage: {
+  //       senderName: "Mike",
+  //       content: "Let's schedule a meeting",
+  //       createdAt: "2025-06-23T04:20:00Z",
+  //     },
+  //   },
+  // ];
+
+  let directConversations = conversations
+    .filter((item: ConversationProps) => item.type === "direct")
+    .sort((a: ConversationProps, b: ConversationProps) => {
+      const aDate = a?.lastMessage?.createdAt || a.createdAt;
+      const bDate = b?.lastMessage?.createdAt || b.createdAt;
+      return new Date(bDate).getTime() - new Date(aDate).getTime();
+    });
+
+  let groupConversations = conversations
+    .filter((item: ConversationProps) => item.type === "group")
+    .sort((a: ConversationProps, b: ConversationProps) => {
+      const aDate = a?.lastMessage?.createdAt || a.createdAt;
+      const bDate = b?.lastMessage?.createdAt || b.createdAt;
+      return new Date(bDate).getTime() - new Date(aDate).getTime();
+    });
 
   return (
     <ScreenWrapper showPattern={true} bgOpacity={0.4}>
@@ -59,8 +169,91 @@ const Home = () => {
             />
           </TouchableOpacity>
         </View>
-        <View style={styles.content}></View>
+        <View style={styles.content}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingVertical: spacingY._20 }}
+          >
+            <View style={styles.navBar}>
+              <View style={styles.tabs}>
+                <TouchableOpacity
+                  onPress={() => setSelectedTab(0)}
+                  style={[
+                    styles.tabStyle,
+                    selectedTab === 0 && styles.activeTabStyle,
+                  ]}
+                >
+                  <Typo>Direct Messages</Typo>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => setSelectedTab(1)}
+                  style={[
+                    styles.tabStyle,
+                    selectedTab === 1 && styles.activeTabStyle,
+                  ]}
+                >
+                  <Typo>Groups</Typo>
+                </TouchableOpacity>
+              </View>
+            </View>
+            <View style={styles.conversationList}>
+              {selectedTab === 0 &&
+                directConversations.map((item: ConversationProps, index) => {
+                  return (
+                    <ConversationItem
+                      item={item}
+                      key={index}
+                      router={router}
+                      showDivider={directConversations.length !== index + 1}
+                    />
+                  );
+                })}
+              {selectedTab === 1 &&
+                groupConversations.map((item: any, index) => {
+                  return (
+                    <ConversationItem
+                      item={item}
+                      key={index}
+                      router={router}
+                      showDivider={groupConversations.length !== index + 1}
+                    />
+                  );
+                })}
+            </View>
+            {!loading &&
+              selectedTab === 0 &&
+              directConversations.length === 0 && (
+                <Typo style={{ textAlign: "center" }}>
+                  You don{"'"}t have any messages
+                </Typo>
+              )}
+            {!loading &&
+              selectedTab === 1 &&
+              groupConversations.length === 0 && (
+                <Typo style={{ textAlign: "center" }}>
+                  You haven{"'"}t join any group yet
+                </Typo>
+              )}
+            {loading && <Loading />}
+          </ScrollView>
+        </View>
       </View>
+
+      <Button
+        style={styles.floatingButton}
+        onPress={() =>
+          router.push({
+            pathname: "/(main)/newConversationModal",
+            params: { isGroup: selectedTab },
+          })
+        }
+      >
+        <Icons.Plus
+          color={colors.black}
+          weight="bold"
+          size={verticalScale(20)}
+        />
+      </Button>
     </ScreenWrapper>
   );
 };
@@ -103,6 +296,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: spacingX._15,
     alignItems: "center",
+  },
+  tabStyle: {
+    paddingVertical: spacingY._10,
+    paddingHorizontal: spacingX._20,
+    borderRadius: radius.full,
+    backgroundColor: colors.neutral100,
   },
   activeTabStyle: {
     backgroundColor: colors.primaryLight,
