@@ -14,7 +14,7 @@ import Typo from "@/components/Typo";
 import { useLocalSearchParams } from "expo-router";
 import { useAuth } from "@/contexts/authContext";
 import { scale, verticalScale } from "@/utils/styling";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import Backbutton from "@/components/Backbutton";
 import Avatar from "@/components/Avatar";
@@ -24,6 +24,8 @@ import MessageItem from "@/components/MessageItem";
 import Input from "@/components/Input";
 import Loading from "@/components/Loading";
 import { uploadFileToCloudinary } from "@/services/imageService";
+import { newMessage, getMessages } from "@/socket/socketEvents";
+import { MessageProps, ResponseProps } from "@/types";
 
 const Conversation = () => {
   const { user: currentUser } = useAuth();
@@ -41,6 +43,7 @@ const Conversation = () => {
     null,
   );
   const [loading, setLoading] = useState(false);
+  const [messages, setMessages] = useState<MessageProps[]>([]);
 
   const participants = JSON.parse(stringifiedParticipants as string);
 
@@ -57,118 +60,148 @@ const Conversation = () => {
 
   // console.log("got conversation data: ", data);
 
-  const dummyMessages = [
-    {
-      id: "msg_10",
-      sender: {
-        id: "user_1",
-        name: "John Doe",
-        avatar: null,
-      },
-      content: "Mantap, tadi presentasinya lancar banget 🔥",
-      createdAt: "11:02 AM",
-      isMe: false,
-    },
-    {
-      id: "msg_9",
-      sender: {
-        id: "me",
-        name: "You",
-        avatar: null,
-      },
-      content: "Syukurrr 😄 Makasih ya udah bantu cek slide semalam.",
-      createdAt: "11:00 AM",
-      isMe: true,
-    },
-    {
-      id: "msg_8",
-      sender: {
-        id: "user_1",
-        name: "John Doe",
-        avatar: null,
-      },
-      content: "Keren! Aku suka bagian demo realtime-nya.",
-      createdAt: "10:58 AM",
-      isMe: false,
-    },
-    {
-      id: "msg_7",
-      sender: {
-        id: "me",
-        name: "You",
-        avatar: null,
-      },
-      content: "Finally selesai juga. Kamu lagi di kantor atau WFH?",
-      createdAt: "10:55 AM",
-      isMe: true,
-    },
-    {
-      id: "msg_6",
-      sender: {
-        id: "user_1",
-        name: "John Doe",
-        avatar: null,
-      },
-      content: "WFH hari ini. Nanti sore mau ngopi?",
-      createdAt: "10:53 AM",
-      isMe: false,
-    },
-    {
-      id: "msg_5",
-      sender: {
-        id: "me",
-        name: "You",
-        avatar: null,
-      },
-      content: "Gas! Jam 4 di tempat biasa?",
-      createdAt: "10:51 AM",
-      isMe: true,
-    },
-    {
-      id: "msg_4",
-      sender: {
-        id: "user_1",
-        name: "John Doe",
-        avatar: null,
-      },
-      content: "Sip, aku booking meja pojok ya.",
-      createdAt: "10:49 AM",
-      isMe: false,
-    },
-    {
-      id: "msg_3",
-      sender: {
-        id: "me",
-        name: "You",
-        avatar: null,
-      },
-      content: "Deal. Sekalian bahas ide fitur chat yang kemarin.",
-      createdAt: "10:47 AM",
-      isMe: true,
-    },
-    {
-      id: "msg_2",
-      sender: {
-        id: "user_1",
-        name: "John Doe",
-        avatar: null,
-      },
-      content: "Siap boss 💻",
-      createdAt: "10:45 AM",
-      isMe: false,
-    },
-    {
-      id: "msg_1",
-      sender: {
-        id: "me",
-        name: "You",
-        avatar: null,
-      },
-      content: "Let's go!",
-      createdAt: "10:44 AM",
-      isMe: true,
-    },
-  ];
+  useEffect(() => {
+    newMessage(newMessageHandler);
+    getMessages(messagesHandler);
+
+    getMessages({
+      conversationId,
+    });
+
+    return () => {
+      newMessage(newMessageHandler, true);
+      getMessages(messagesHandler, true);
+    };
+  }, []);
+
+  const newMessageHandler = (res: ResponseProps) => {
+    setLoading(false);
+    if (res.success) {
+      if (res.data.conversationId === conversationId) {
+        setMessages((prev) => [res.data as MessageProps, ...prev]);
+      }
+    } else {
+      Alert.alert("Error", res.msg);
+    }
+    // console.log("git new message response: ", res)
+  };
+
+  const messagesHandler = (res: ResponseProps) => {
+    if (res.success) setMessages(res.data);
+  };
+
+  // const dummyMessages = [
+  //   {
+  //     id: "msg_10",
+  //     sender: {
+  //       id: "user_1",
+  //       name: "John Doe",
+  //       avatar: null,
+  //     },
+  //     content: "Mantap, tadi presentasinya lancar banget 🔥",
+  //     createdAt: "11:02 AM",
+  //     isMe: false,
+  //   },
+  //   {
+  //     id: "msg_9",
+  //     sender: {
+  //       id: "me",
+  //       name: "You",
+  //       avatar: null,
+  //     },
+  //     content: "Syukurrr 😄 Makasih ya udah bantu cek slide semalam.",
+  //     createdAt: "11:00 AM",
+  //     isMe: true,
+  //   },
+  //   {
+  //     id: "msg_8",
+  //     sender: {
+  //       id: "user_1",
+  //       name: "John Doe",
+  //       avatar: null,
+  //     },
+  //     content: "Keren! Aku suka bagian demo realtime-nya.",
+  //     createdAt: "10:58 AM",
+  //     isMe: false,
+  //   },
+  //   {
+  //     id: "msg_7",
+  //     sender: {
+  //       id: "me",
+  //       name: "You",
+  //       avatar: null,
+  //     },
+  //     content: "Finally selesai juga. Kamu lagi di kantor atau WFH?",
+  //     createdAt: "10:55 AM",
+  //     isMe: true,
+  //   },
+  //   {
+  //     id: "msg_6",
+  //     sender: {
+  //       id: "user_1",
+  //       name: "John Doe",
+  //       avatar: null,
+  //     },
+  //     content: "WFH hari ini. Nanti sore mau ngopi?",
+  //     createdAt: "10:53 AM",
+  //     isMe: false,
+  //   },
+  //   {
+  //     id: "msg_5",
+  //     sender: {
+  //       id: "me",
+  //       name: "You",
+  //       avatar: null,
+  //     },
+  //     content: "Gas! Jam 4 di tempat biasa?",
+  //     createdAt: "10:51 AM",
+  //     isMe: true,
+  //   },
+  //   {
+  //     id: "msg_4",
+  //     sender: {
+  //       id: "user_1",
+  //       name: "John Doe",
+  //       avatar: null,
+  //     },
+  //     content: "Sip, aku booking meja pojok ya.",
+  //     createdAt: "10:49 AM",
+  //     isMe: false,
+  //   },
+  //   {
+  //     id: "msg_3",
+  //     sender: {
+  //       id: "me",
+  //       name: "You",
+  //       avatar: null,
+  //     },
+  //     content: "Deal. Sekalian bahas ide fitur chat yang kemarin.",
+  //     createdAt: "10:47 AM",
+  //     isMe: true,
+  //   },
+  //   {
+  //     id: "msg_2",
+  //     sender: {
+  //       id: "user_1",
+  //       name: "John Doe",
+  //       avatar: null,
+  //     },
+  //     content: "Siap boss 💻",
+  //     createdAt: "10:45 AM",
+  //     isMe: false,
+  //   },
+  //   {
+  //     id: "msg_1",
+  //     sender: {
+  //       id: "me",
+  //       name: "You",
+  //       avatar: null,
+  //     },
+  //     content: "Let's go!",
+  //     createdAt: "10:44 AM",
+  //     isMe: true,
+  //   },
+  // ];
 
   const onPickFile = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -205,7 +238,19 @@ const Conversation = () => {
         }
       }
 
-      console.log("attachment: ", attachment);
+      newMessage({
+        conversationId,
+        sender: {
+          id: currentUser.id,
+          name: currentUser.name,
+          avatar: currentUser.avatar,
+        },
+        content: message.trim(),
+        attachment,
+      });
+
+      setMessage("");
+      setSelectedFile(null);
     } catch (error: any) {
       console.log("Error sending message: ", error);
       Alert.alert("Error", "Failed to send message");
@@ -248,7 +293,7 @@ const Conversation = () => {
         {/* messages */}
         <View style={styles.content}>
           <FlatList
-            data={dummyMessages}
+            data={messages}
             inverted={true}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.messagesContent}

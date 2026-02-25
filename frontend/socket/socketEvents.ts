@@ -104,3 +104,45 @@ export const getConversations = (payload: any, off: boolean = false) => {
     socket.emit("getConversations", payload);
   }
 };
+
+export const newMessage = (payload: any, off: boolean = false) => {
+  const socket = getSocket();
+
+  if (!socket) {
+    console.log("Socket is not connected");
+    return;
+  }
+
+  if (off) {
+    // turn off listing to this event
+    // payload is the callback
+    socket.off("newMessage", payload);
+  } else if (typeof payload == "function") {
+    // payload as callback for this event
+    socket.on("newMessage", payload);
+  } else {
+    // sending payload as data
+    socket.emit("newMessage", payload);
+  }
+};
+
+export const getMessages = (payload: any, off: boolean = false) => {
+  const socket = getSocket();
+
+  if (!socket) {
+    console.log("Socket is not connected");
+    return;
+  }
+
+  if (off) {
+    // turn off listing to this event
+    // payload is the callback
+    socket.off("getMessages", payload);
+  } else if (typeof payload == "function") {
+    // payload as callback for this event
+    socket.on("getMessages", payload);
+  } else {
+    // sending payload as data
+    socket.emit("getMessages", payload);
+  }
+};
