@@ -22,6 +22,7 @@ import { UserDataProps } from "@/types";
 import Button from "@/components/Button";
 import { useRouter } from "expo-router";
 import { updateProfile } from "@/socket/socketEvents";
+import { uploadFileToCloudinary } from "@/services/imageService";
 
 const ProfileModal = () => {
   const { user, signOut, updateToken } = useAuth();
@@ -104,22 +105,26 @@ const ProfileModal = () => {
       return;
     }
 
+    setLoading(true);
+
     let data: any = {
       name,
     };
 
-    // only send avatar if it's a new image (object) or it's different from current user avatar
+    // upload new local avatar to Cloudinary before updating profile
     if (avatar && typeof avatar === "object" && avatar.uri) {
-      // new image selected - send URI
-      data.avatar = avatar.uri;
+      const uploadResult = await uploadFileToCloudinary(avatar, "user-avatars");
+      if (!uploadResult.success) {
+        setLoading(false);
+        Alert.alert("User", uploadResult.msg || "Could not upload avatar");
+        return;
+      }
+      data.avatar = uploadResult.data;
     } else if (typeof avatar === "string" && avatar !== user?.avatar) {
-      // avatar is string and different from current - send it
       data.avatar = avatar;
     }
 
     console.log("data: ", data);
-    setLoading(true);
-
     updateProfile(data);
   };
 

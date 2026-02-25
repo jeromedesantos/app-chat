@@ -2,9 +2,8 @@ import { colors } from "@/constants/theme";
 import { BackButtonProps } from "@/types";
 import { verticalScale } from "@/utils/styling";
 import { useRouter } from "expo-router";
-import * as Icons from "phosphor-react-native";
-import React from "react";
 import { StyleSheet, TouchableOpacity } from "react-native";
+import * as Icons from "phosphor-react-native";
 
 const Backbutton = ({
   style,
