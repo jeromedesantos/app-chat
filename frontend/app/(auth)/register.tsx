@@ -97,6 +97,9 @@ const Register = () => {
               />
               <Input
                 placeholder="Enter your password"
+                secureTextEntry
+                autoCapitalize="none"
+                autoCorrect={false}
                 onChangeText={(value: string) => {
                   passwordRef.current = value;
                 }}

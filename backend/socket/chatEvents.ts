@@ -71,12 +71,36 @@ export function registerChatEvents(io: SocketIOServer, socket: Socket) {
       return;
     }
     try {
+      const currentUserId = socket.data.userId?.toString();
+      const uniqueParticipants = Array.from(
+        new Set((data.participants || []).map((id: any) => id?.toString())),
+      ).filter((id): id is string => Boolean(id));
+
+      if (!currentUserId || !uniqueParticipants.includes(currentUserId)) {
+        socket.emit("newConversation", {
+          success: false,
+          msg: "Invalid participants",
+        });
+        return;
+      }
+
+      if (
+        data.type === "direct" &&
+        (uniqueParticipants.length !== 2 || !currentUserId)
+      ) {
+        socket.emit("newConversation", {
+          success: false,
+          msg: "Direct conversation must have exactly 2 participants",
+        });
+        return;
+      }
+
       if (data.type === "direct") {
         // check if already exists
         const exitingConversation = await Conversation.findOne({
           type: "direct",
           participants: {
-            $all: data.participants,
+            $all: uniqueParticipants,
             $size: 2,
           },
         })
@@ -95,9 +119,9 @@ export function registerChatEvents(io: SocketIOServer, socket: Socket) {
         }
       }
       // create new conversation
-      const conversation = await Conversation.create({
+      const conversation: any = await Conversation.create({
         type: data.type,
-        participants: data.participants,
+        participants: uniqueParticipants,
         name: data.name || "", // can be empty if direct conversation
         avatar: data.avatar || "", // same
         createdBy: socket.data.userId,
@@ -105,7 +129,7 @@ export function registerChatEvents(io: SocketIOServer, socket: Socket) {
 
       // get all connectect sockets
       const connectedSockets = Array.from(io.sockets.sockets.values()).filter(
-        (s) => data.participants.includes(s.data.userId),
+        (s) => uniqueParticipants.includes(s.data.userId?.toString()),
       );
 
       // join this conversation by all online participants
@@ -114,7 +138,7 @@ export function registerChatEvents(io: SocketIOServer, socket: Socket) {
       });
 
       // send conversation data back (populated)
-      const populatedConversation = await Conversation.findById(
+      const populatedConversation: any = await Conversation.findById(
         conversation._id,
       )
         .populate({
@@ -145,9 +169,33 @@ export function registerChatEvents(io: SocketIOServer, socket: Socket) {
     console.log("newMessage event: ", data);
 
     try {
+      const currentUserId = socket.data.userId?.toString();
+      if (!currentUserId) {
+        socket.emit("newMessage", {
+          success: false,
+          msg: "Unauthorized",
+        });
+        return;
+      }
+
+      const conversation = await Conversation.findOne({
+        _id: data.conversationId,
+        participants: currentUserId,
+      })
+        .select("_id")
+        .lean();
+
+      if (!conversation) {
+        socket.emit("newMessage", {
+          success: false,
+          msg: "Forbidden: you are not a participant",
+        });
+        return;
+      }
+
       const message = await Message.create({
         conversationId: data.conversationId,
-        senderId: socket.data.userId,
+        senderId: currentUserId,
         content: data.content,
         attachment: data.attachment,
       });
@@ -158,9 +206,9 @@ export function registerChatEvents(io: SocketIOServer, socket: Socket) {
           id: message._id,
           content: data.content,
           sender: {
-            id: data.sender.id,
-            name: data.sender.name,
-            avatar: data.sender.avatar,
+            id: currentUserId,
+            name: socket.data.user?.name || "",
+            avatar: socket.data.user?.avatar || "",
           },
           attachment: data.attachment,
           createdAt: new Date().toISOString(),
@@ -185,6 +233,30 @@ export function registerChatEvents(io: SocketIOServer, socket: Socket) {
     console.log("getMessages event: ", data);
 
     try {
+      const currentUserId = socket.data.userId?.toString();
+      if (!currentUserId) {
+        socket.emit("getMessages", {
+          success: false,
+          msg: "Unauthorized",
+        });
+        return;
+      }
+
+      const conversation = await Conversation.findOne({
+        _id: data.conversationId,
+        participants: currentUserId,
+      })
+        .select("_id")
+        .lean();
+
+      if (!conversation) {
+        socket.emit("getMessages", {
+          success: false,
+          msg: "Forbidden: you are not a participant",
+        });
+        return;
+      }
+
       const messages = await Message.find({
         conversationId: data.conversationId,
       })
@@ -218,3 +290,5 @@ export function registerChatEvents(io: SocketIOServer, socket: Socket) {
     }
   });
 }
+
+
