@@ -23,7 +23,7 @@ export const uploadFileToCloudinary = async (
         name: file.uri.split("/").pop(),
       } as any);
 
-      formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+      formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET || "");
       formData.append("folder", folderName);
 
       const response = await axios.post(CLOUDINARY_API_URL, formData, {

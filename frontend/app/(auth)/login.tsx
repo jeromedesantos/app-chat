@@ -50,7 +50,10 @@ const Login = () => {
       <ScreenWrapper showPattern={true}>
         <View style={styles.container}>
           <View style={styles.header}>
-            <BackButton iconSize={28} />
+            <BackButton
+              iconSize={28}
+              onPress={() => router.replace("/(auth)/welcome")}
+            />
             <Typo size={17} color={colors.white}>
               Forgot your password?
             </Typo>

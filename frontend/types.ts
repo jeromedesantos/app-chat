@@ -85,6 +85,7 @@ export type BackButtonProps = {
   style?: ViewStyle;
   color?: string;
   iconSize?: number;
+  onPress?: () => void;
 };
 
 export type AvatarProps = {

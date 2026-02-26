@@ -1,7 +1,7 @@
 import { model, Schema } from "mongoose";
 import type { ConversationProps } from "../types.ts";
 
-const ConversationSchema = new Schema<ConversationProps>({
+const conversationSchema = new Schema<ConversationProps>({
   type: {
     type: String,
     enum: ["direct", "group"],
@@ -37,8 +37,8 @@ const ConversationSchema = new Schema<ConversationProps>({
   },
 });
 
-ConversationSchema.pre("save", function () {
+conversationSchema.pre("save", function () {
   this.updatedAt = new Date();
 });
 
-export default model<ConversationProps>("Conversation", ConversationSchema);
+export default model<ConversationProps>("Conversation", conversationSchema);

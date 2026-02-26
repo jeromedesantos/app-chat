@@ -9,12 +9,13 @@ const Backbutton = ({
   style,
   iconSize = 26,
   color = colors.white,
+  onPress,
 }: BackButtonProps) => {
   const router = useRouter();
 
   return (
     <TouchableOpacity
-      onPress={() => router.back()}
+      onPress={onPress || (() => router.back())}
       style={[styles.button, style]}
     >
       <Icons.CaretLeft
